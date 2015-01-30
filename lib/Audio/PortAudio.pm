@@ -25,7 +25,7 @@ constant paPrimingOutput is export      = 0x00000010;
 enum PaErrorCode is export (
     "paNoError" => 0,
     "paNotInitialized" => -10000,
-    "paUnanticipatedHostError", 
+    "paUnanticipatedHostError",
     "paInvalidChannelCount",
     "paInvalidSampleRate",
     "paInvalidDevice",
@@ -89,7 +89,27 @@ class PaStreamParameters is export is repr('CStruct') {
     has int $.channel-count;
     has int $.sample-format;
     has num $.suggestedLatency;
-    has CArray $.hostApiSpecificStreaminfo;
+    has CArray[OpaquePointer] $.hostApiSpecificStreaminfo;
+}
+
+class PaDeviceInfo is export is repr('CStruct') {
+    has int $.struct-version;
+    has Str $.name;
+    has int $.api-version;
+    has int $.max-input-channels;
+    has int $.max-output-channels;
+    has num $.default-low-input-latency;
+    has num $.default-low-output-latency;
+    has num $.default-high-input-latency;
+    has num $.default-high-output-latency;
+    has num $.default-sample-rate;
+
+    method perl() {
+        "PaDeviceInfo.new(struct-version => $.struct-version, name => $.name, api-version => $.api-version, " ~
+        "max-input-channels => $.max-input-channels, default-low-input-latency => $.default-low-input-latency, "~
+        "default-low-output-latency => $.default-low-output-latency, default-high-input-latency => $.default-high-input-latency, " ~
+        "default-high-output-latency => $.default-high-output-latency, default-sample-rate => $.default-sample-rate"
+    }
 }
 
 sub Pa_Initialize() returns int is export is native('libportaudio') {...}
@@ -99,27 +119,32 @@ sub Pa_GetDeviceCount() returns int is export is native('libportaudio') {...}
 sub Pa_GetErrorText(int $errcode) returns Str is export is native('libportaudio') {...}
 
 sub Pa_GetDefaultOutputDevice() returns int is export is native('libportaudio') {...}
+sub Pa_GetDeviceInfo(int $device-number) returns PaDeviceInfo is export is native('libportaudio') {...}
 
-sub Pa_OpenDefaultStream(CArray $stream is rw, 
-                         int $input = 0, 
-                         int $output = 2, 
+sub Pa_OpenDefaultStream(CArray[OpaquePointer] $stream,
+                         int $input = 0,
+                         int $output = 2,
                          int $format = 0,
-                         num $sample-rate = SAMPLE_RATE, 
-                         int $frames-per-buffer = FRAMES_PER_BUFFER, 
-                         &callback (OpaquePointer $inputbuf, OpaquePointer $ouputbuf, int $framecount, 
-                             PaStreamCallbackTimeInfo $callback-time-info, int $flags --> int) = Nil, 
-                         CArray $user-data = OpaquePointer.new)
+                         num $sample-rate = SAMPLE_RATE,
+                         int $frames-per-buffer = FRAMES_PER_BUFFER,
+                         &callback (OpaquePointer $inputbuf, OpaquePointer $ouputbuf, int $framecount,
+                             PaStreamCallbackTimeInfo $callback-time-info, int $flags,
+                             OpaquePointer $cb-user-data --> int) = Nil,
+                         OpaquePointer $user-data = OpaquePointer.new)
     returns int is export is native('libportaudio') {...}
 
-sub Pa_OpenStream(CArray $stream is rw,
+sub Pa_OpenStream(CArray[OpaquePointer] $stream,
                   PaStreamParameters $inParams,
                   PaStreamParameters $outParams,
                   num $sample-rate,
                   int $frames-per-buffer,
                   int $flags,
-                  CArray $user-data) 
+                  CArray[OpaquePointer] $user-data)
     returns int is export is native('libportaudio') {...}
-                  
 
-sub Pa_StartStream(CArray $stream is rw) returns int is export is native('libportaudio') {...}
-sub Pa_CloseStream(CArray $stream is rw) returns int is export is native('libportaudio') {...}
+sub Pa_WriteStream(OpaquePointer $stream, CArray[CArray[num32]] $buf,
+    int $frames) returns int is export is native('libportaudio') {...}
+
+sub Pa_StartStream(OpaquePointer $stream) returns int is export is native('libportaudio') {...}
+sub Pa_CloseStream(OpaquePointer $stream) returns int is export is native('libportaudio') {...}
+

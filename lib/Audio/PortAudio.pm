@@ -14,13 +14,19 @@ constant paInt16 is export          = 0x00000008;
 constant paInt8 is export           = 0x00000010;
 constant paUInt8 is export          = 0x00000020;
 constant paCustomFormat is export   = 0x00010000;
-# constant paNonInterleaved is export = 0x80000000;
+constant paNonInterleaved is export = 0x80000000;
 
 constant paInputUnderflow is export     = 0x00000001;
 constant paInputOverflow is export      = 0x00000002;
 constant paOutputUnderflow is export    = 0x00000004;
 constant paOutputOverflow is export     = 0x00000008;
 constant paPrimingOutput is export      = 0x00000010;
+
+constant paClipOff is export                    = 0x00000001;
+constant paDitherOff is export                  = 0x00000002;
+constant paNeverDropInput is export             = 0x00000004;
+constant paPrimeOutputBufferUsingStreamCallback = 0x00000008;
+constant paPlatformSpecificFlags                = 0xFFFF0000;
 
 enum PaErrorCode is export (
     "paNoError" => 0,
@@ -85,19 +91,19 @@ class PaStreamCallbackTimeInfo is export is repr('CStruct') {
 }
 
 class PaStreamParameters is export is repr('CStruct') {
-    has int $.device;
-    has int $.channel-count;
+    has int32 $.device;
+    has int32 $.channel-count;
     has int $.sample-format;
-    has num $.suggestedLatency;
-    has CArray[OpaquePointer] $.hostApiSpecificStreaminfo;
+    has num $.suggested-latency;
+    has CArray[OpaquePointer] $.host-api-specific-streaminfo;
 }
 
 class PaDeviceInfo is export is repr('CStruct') {
-    has int $.struct-version;
+    has int32 $.struct-version;
     has Str $.name;
-    has int $.api-version;
-    has int $.max-input-channels;
-    has int $.max-output-channels;
+    has int32 $.api-version;
+    has int32 $.max-input-channels;
+    has int32 $.max-output-channels;
     has num $.default-low-input-latency;
     has num $.default-low-output-latency;
     has num $.default-high-input-latency;
@@ -106,7 +112,7 @@ class PaDeviceInfo is export is repr('CStruct') {
 
     method perl() {
         "PaDeviceInfo.new(struct-version => $.struct-version, name => $.name, api-version => $.api-version, " ~
-        "max-input-channels => $.max-input-channels, default-low-input-latency => $.default-low-input-latency, "~
+        "max-input-channels => $.max-input-channels, max-output-channels => $.max-output-channels, default-low-input-latency => $.default-low-input-latency, "~
         "default-low-output-latency => $.default-low-output-latency, default-high-input-latency => $.default-high-input-latency, " ~
         "default-high-output-latency => $.default-high-output-latency, default-sample-rate => $.default-sample-rate"
     }

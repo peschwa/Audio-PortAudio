@@ -2,7 +2,7 @@ use v6;
 
 use NativeCall;
 
-module Audio::PortAudio;
+unit module Audio::PortAudio;
 
 constant FRAMES_PER_BUFFER = 256;
 constant SAMPLE_RATE = 44100e0;

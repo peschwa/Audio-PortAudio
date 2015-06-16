@@ -35,7 +35,7 @@ my $out-params = PaStreamParameters.new(:device(Pa_GetDefaultOutputDevice), :cha
     :suggested-latency(0.05e0));
     #:suggested-latency(Pa_GetDeviceInfo(Pa_GetDefaultOutputDevice).default-low-output-latency));
 
-$err = Pa_OpenStream($stream, Nil, $out-params, SAMPLE_RATE, FRAMES_PER_BUFFER, paClipOff, Nil, Nil);
+$err = Pa_OpenStream($stream, PaStreamParameters, $out-params, SAMPLE_RATE, FRAMES_PER_BUFFER, paClipOff, CArray[Pointer]);
 say "open: " ~ Pa_GetErrorText($err);
 
 say "stream is $stream, stream[0] is $stream[0]";
@@ -47,12 +47,12 @@ my CArray[num32] $wave .= new;
 
 # sine
 for ^TABLE_SIZE {
-    my num32 $v = sin( ($_ / TABLE_SIZE) * pi * 2);
-    $wave[$_] = $v;
+    my $v = sin( ($_ / TABLE_SIZE) * pi * 2);
+    $wave[$_] = Num($v);
 }
 
-my int $left-phase = 0;
-my int $right-phase = 0;
+my Int $left-phase = 0;
+my Int $right-phase = 0;
 
 my CArray[CArray[num32]] $buffer .= new;
 my CArray[num32] $left .= new;
@@ -61,12 +61,13 @@ my CArray[num32] $right .= new;
 $buffer[0] = $left;
 $buffer[1] = $right;
 
-my int $j = 0;
-my $i = 0;
+my Int $j = 0;
+my Int $i = 0;
 while $j < (2 * SAMPLE_RATE / FRAMES_PER_BUFFER) {
     while $i < FRAMES_PER_BUFFER {
-        $left[$i] = $wave[$left-phase];
-        $right[$i] = $wave[$right-phase];
+        my $n-l = Num($wave[$left-phase]);
+        $left[$i] = $n-l;
+        $right[$i] = Num($wave[$right-phase]);
         $left-phase -= TABLE_SIZE if $left-phase >= TABLE_SIZE;
         $right-phase -= TABLE_SIZE if $right-phase >= TABLE_SIZE;
         $left-phase += 1;

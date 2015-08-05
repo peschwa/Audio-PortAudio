@@ -133,7 +133,7 @@ sub Pa_OpenDefaultStream(CArray[OpaquePointer] $stream,
                          int $format = 0,
                          num $sample-rate = SAMPLE_RATE,
                          int $frames-per-buffer = FRAMES_PER_BUFFER,
-                         &callback (OpaquePointer $inputbuf, OpaquePointer $ouputbuf, int $framecount,
+                         &callback (OpaquePointer $inputbuf, OpaquePointer $outputbuf, int $framecount,
                              PaStreamCallbackTimeInfo $callback-time-info, int $flags,
                              OpaquePointer $cb-user-data --> int) = Nil,
                          OpaquePointer $user-data = OpaquePointer.new)

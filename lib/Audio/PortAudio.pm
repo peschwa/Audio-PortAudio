@@ -118,14 +118,14 @@ class PaDeviceInfo is export is repr('CStruct') {
     }
 }
 
-sub Pa_Initialize() returns int is export is native('libportaudio') {...}
-sub Pa_Terminate() returns int is export is native('libportaudio') {...}
-sub Pa_GetDeviceCount() returns int is export is native('libportaudio') {...}
+sub Pa_Initialize() returns int is export is native('portaudio',v2) {...}
+sub Pa_Terminate() returns int is export is native('portaudio',v2) {...}
+sub Pa_GetDeviceCount() returns int is export is native('portaudio',v2) {...}
 
-sub Pa_GetErrorText(int $errcode) returns Str is export is native('libportaudio') {...}
+sub Pa_GetErrorText(int $errcode) returns Str is export is native('portaudio',v2) {...}
 
-sub Pa_GetDefaultOutputDevice() returns int is export is native('libportaudio') {...}
-sub Pa_GetDeviceInfo(int $device-number) returns PaDeviceInfo is export is native('libportaudio') {...}
+sub Pa_GetDefaultOutputDevice() returns int is export is native('portaudio',v2) {...}
+sub Pa_GetDeviceInfo(int $device-number) returns PaDeviceInfo is export is native('portaudio',v2) {...}
 
 sub Pa_OpenDefaultStream(CArray[OpaquePointer] $stream,
                          int $input = 0,
@@ -137,7 +137,7 @@ sub Pa_OpenDefaultStream(CArray[OpaquePointer] $stream,
                              PaStreamCallbackTimeInfo $callback-time-info, int $flags,
                              OpaquePointer $cb-user-data --> int) = Nil,
                          OpaquePointer $user-data = OpaquePointer.new)
-    returns int is export is native('libportaudio') {...}
+    returns int is export is native('portaudio',v2) {...}
 
 sub Pa_OpenStream(CArray[OpaquePointer] $stream,
                   PaStreamParameters $inParams,
@@ -146,11 +146,11 @@ sub Pa_OpenStream(CArray[OpaquePointer] $stream,
                   int $frames-per-buffer,
                   int $flags,
                   CArray[OpaquePointer] $user-data)
-    returns int is export is native('libportaudio') {...}
+    returns int is export is native('portaudio',v2) {...}
 
 sub Pa_WriteStream(OpaquePointer $stream, CArray[CArray[num32]] $buf,
-    int $frames) returns int is export is native('libportaudio') {...}
+    int $frames) returns int is export is native('portaudio',v2) {...}
 
-sub Pa_StartStream(OpaquePointer $stream) returns int is export is native('libportaudio') {...}
-sub Pa_CloseStream(OpaquePointer $stream) returns int is export is native('libportaudio') {...}
+sub Pa_StartStream(OpaquePointer $stream) returns int is export is native('portaudio',v2) {...}
+sub Pa_CloseStream(OpaquePointer $stream) returns int is export is native('portaudio',v2) {...}
 

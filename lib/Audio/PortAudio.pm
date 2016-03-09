@@ -2,7 +2,7 @@ use v6;
 
 use NativeCall;
 
-unit module Audio::PortAudio;
+module Audio::PortAudio {
 
 constant FRAMES_PER_BUFFER = 256;
 constant SAMPLE_RATE = 44100e0;
@@ -118,39 +118,40 @@ class PaDeviceInfo is export is repr('CStruct') {
     }
 }
 
-sub Pa_Initialize() returns int is export is native('portaudio',v2) {...}
-sub Pa_Terminate() returns int is export is native('portaudio',v2) {...}
-sub Pa_GetDeviceCount() returns int is export is native('portaudio',v2) {...}
+sub Pa_Initialize() returns int32 is export is native('portaudio',v2) {...}
+sub Pa_Terminate() returns int32 is export is native('portaudio',v2) {...}
+sub Pa_GetDeviceCount() returns int32 is export is native('portaudio',v2) {...}
 
-sub Pa_GetErrorText(int $errcode) returns Str is export is native('portaudio',v2) {...}
+sub Pa_GetErrorText(int32 $errcode) returns Str is export is native('portaudio',v2) {...}
 
-sub Pa_GetDefaultOutputDevice() returns int is export is native('portaudio',v2) {...}
-sub Pa_GetDeviceInfo(int $device-number) returns PaDeviceInfo is export is native('portaudio',v2) {...}
+sub Pa_GetDefaultOutputDevice() returns int32 is export is native('portaudio',v2) {...}
+sub Pa_GetDeviceInfo(int32 $device-number) returns PaDeviceInfo is export is native('portaudio',v2) {...}
 
 sub Pa_OpenDefaultStream(CArray[OpaquePointer] $stream,
-                         int $input = 0,
-                         int $output = 2,
-                         int $format = 0,
-                         num $sample-rate = SAMPLE_RATE,
-                         int $frames-per-buffer = FRAMES_PER_BUFFER,
+                         int32 $input = 0,
+                         int32 $output = 2,
+                         int32 $format = 0,
+                         num64 $sample-rate = SAMPLE_RATE,
+                         int32 $frames-per-buffer = FRAMES_PER_BUFFER,
                          &callback (OpaquePointer $inputbuf, OpaquePointer $outputbuf, int $framecount,
                              PaStreamCallbackTimeInfo $callback-time-info, int $flags,
                              OpaquePointer $cb-user-data --> int) = Nil,
                          OpaquePointer $user-data = OpaquePointer.new)
-    returns int is export is native('portaudio',v2) {...}
+    returns int32 is export is native('portaudio',v2) {...}
 
 sub Pa_OpenStream(CArray[OpaquePointer] $stream,
                   PaStreamParameters $inParams,
                   PaStreamParameters $outParams,
-                  num $sample-rate,
-                  int $frames-per-buffer,
-                  int $flags,
+                  num64 $sample-rate,
+                  int32 $frames-per-buffer,
+                  int32 $flags,
                   CArray[OpaquePointer] $user-data)
-    returns int is export is native('portaudio',v2) {...}
+    returns int32 is export is native('portaudio',v2) {...}
 
 sub Pa_WriteStream(OpaquePointer $stream, CArray[CArray[num32]] $buf,
-    int $frames) returns int is export is native('portaudio',v2) {...}
+    int32 $frames) returns int32 is export is native('portaudio',v2) {...}
 
-sub Pa_StartStream(OpaquePointer $stream) returns int is export is native('portaudio',v2) {...}
-sub Pa_CloseStream(OpaquePointer $stream) returns int is export is native('portaudio',v2) {...}
-
+sub Pa_StartStream(OpaquePointer $stream) returns int32 is export is native('portaudio',v2) {...}
+sub Pa_CloseStream(OpaquePointer $stream) returns int32 is export is native('portaudio',v2) {...}
+}
+# vim: expandtab shiftwidth=4 ft=perl6

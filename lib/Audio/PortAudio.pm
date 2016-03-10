@@ -1,4 +1,4 @@
-use v6;
+use v6.c;
 
 use NativeCall;
 
@@ -7,14 +7,16 @@ class Audio::PortAudio {
     constant FRAMES_PER_BUFFER = 256;
     constant SAMPLE_RATE = 44100e0;
     
-    constant paFloat32 is export        = 0x00000001;
-    constant paInt32 is export          = 0x00000002;
-    constant paInt24 is export          = 0x00000004;
-    constant paInt16 is export          = 0x00000008;
-    constant paInt8 is export           = 0x00000010;
-    constant paUInt8 is export          = 0x00000020;
-    constant paCustomFormat is export   = 0x00010000;
-    constant paNonInterleaved is export = 0x80000000;
+    enum StreamFormat (
+        Float32 => 0x00000001,
+        Int32 => 0x00000002,
+        Int24 => 0x00000004,
+        Int16 => 0x00000008,
+        Int8 => 0x00000010,
+        UInt8 => 0x00000020,
+        CustomFormat => 0x00010000,
+        NonInterleaved => 0x80000000,
+    );
     
     constant paInputUnderflow is export     = 0x00000001;
     constant paInputOverflow is export      = 0x00000002;
@@ -62,20 +64,20 @@ class Audio::PortAudio {
     );
     
     enum HostApiTypeId is export (
-        paInDevelopment => 0,
-        paDirectSound => 1,
-        paMME => 2,
-        paASIO => 3,
-        paSoundManager => 4,
-        paCoreAudio => 5,
-        paOSS => 7,
-        paALSA => 8,
-        paAL => 9,
-        paBeOS => 10,
-        paWDMKS => 11,
-        paJACK => 12,
-        paWASAPI => 13,
-        paAudioScienceHPI => 14
+        InDevelopment => 0,
+        DirectSound => 1,
+        MME => 2,
+        ASIO => 3,
+        SoundManager => 4,
+        CoreAudio => 5,
+        OSS => 7,
+        ALSA => 8,
+        AL => 9,
+        BeOS => 10,
+        WDMKS => 11,
+        JACK => 12,
+        WASAPI => 13,
+        AudioScienceHPI => 14
     );
     
     enum StreamCallbackResult is export (
@@ -84,6 +86,13 @@ class Audio::PortAudio {
         paAbort => 2
     );
     
+    sub Pa_GetErrorText(int32 $errcode) returns Str is native('portaudio',v2) {...}
+
+    # Single base exception 
+    class X::PortAudio is Exception {
+
+    }
+
     class StreamCallbackTimeInfo is repr('CStruct') {
         has num $.inputBufferAdcTime;
         has num $.currentTime;
@@ -93,10 +102,36 @@ class Audio::PortAudio {
     class StreamParameters is repr('CStruct') {
         has int32 $.device;
         has int32 $.channel-count;
-        has int $.sample-format;
-        has num $.suggested-latency;
+        has uint32 $.sample-format;
+        has num64 $.suggested-latency;
         has CArray[OpaquePointer] $.host-api-specific-streaminfo;
     }
+
+    class HostApiInfo is repr('CStruct') {
+        has int32   $.struct-version;
+        has int32   $.type;
+        has Str     $.name;
+        has int32   $.device-count;
+        has int32   $.default-input-device;
+        has int32   $.default-output-device;
+    }
+
+    sub Pa_HostApiTypeIdToHostApiIndex( int32 $type ) returns int32 is native('portaudio', v2) { * }
+
+    method host-api-index(HostApiTypeId $type) returns Int {
+        my $rc = Pa_HostApiTypeIdToHostApiIndex($type.Int);
+
+        $rc;
+    }
+
+    sub Pa_GetHostApiInfo(int32 $host-api) returns HostApiInfo is native('portaudio', v2) { * }
+
+    method host-api(HostApiTypeId $type) returns HostApiInfo {
+        my $index = self.host-api-index($type);
+        Pa_GetHostApiInfo($index);
+    }
+
+    sub Pa_HostApiDeviceIndexToDeviceIndex(int32  $host-api, int32 $host-api-device-index ) returns int32 is native('portaudio', v2) { * }
     
     class DeviceInfo is repr('CStruct') {
         has int32 $.struct-version;
@@ -104,17 +139,21 @@ class Audio::PortAudio {
         has int32 $.api-version;
         has int32 $.max-input-channels;
         has int32 $.max-output-channels;
-        has num $.default-low-input-latency;
-        has num $.default-low-output-latency;
-        has num $.default-high-input-latency;
-        has num $.default-high-output-latency;
-        has num $.default-sample-rate;
+        has num64 $.default-low-input-latency;
+        has num64 $.default-low-output-latency;
+        has num64 $.default-high-input-latency;
+        has num64 $.default-high-output-latency;
+        has num64 $.default-sample-rate;
     
         method perl() {
             "DeviceInfo.new(struct-version => $.struct-version, name => $.name, api-version => $.api-version, " ~
             "max-input-channels => $.max-input-channels, max-output-channels => $.max-output-channels, default-low-input-latency => $.default-low-input-latency, "~
             "default-low-output-latency => $.default-low-output-latency, default-high-input-latency => $.default-high-input-latency, " ~
             "default-high-output-latency => $.default-high-output-latency, default-sample-rate => $.default-sample-rate"
+        }
+
+        method host-api() returns HostApiInfo {
+            Pa_GetHostApiInfo($!api-version);
         }
     }
 
@@ -149,6 +188,21 @@ class Audio::PortAudio {
             Bool(Pa_IsStreamActive(self));
         }
 
+        sub Pa_GetStreamReadAvailable( Stream $stream ) returns int32 is native('portaudio', v2) { * }
+
+        method read-available() returns Int {
+            my $rc = Pa_GetStreamReadAvailable(self);
+
+            $rc;
+        }
+
+        sub Pa_GetStreamWriteAvailable( Stream $stream ) returns int32 is native('portaudio', v2) { * }
+
+        method write-available() returns Int {
+            my $rc = Pa_GetStreamWriteAvailable(self);
+
+            $rc;
+        }
     }
 
     submethod BUILD() {
@@ -189,7 +243,6 @@ class Audio::PortAudio {
         }
     }
 
-    sub Pa_GetErrorText(int32 $errcode) returns Str is native('portaudio',v2) {...}
 
     method error-text(Int $error-code) returns Str {
         Pa_GetErrorText($error-code);
@@ -212,20 +265,51 @@ class Audio::PortAudio {
                              CArray $user-data)
         returns int32 is native('portaudio',v2) {...}
 
-    method open-default-stream(Int $input = 0, Int $output = 2, Int $format = 1, Int $sample-rate = 44100, Int $frames-per-buffer = 256) returns Stream {
+    class X::OpenError is Exception {
+        has Int $.code;
+        has Str $.error-text;
+        method message() returns Str  {
+            "error opening stream: '{ $!error-text }'";
+        }
+    }
+
+    method open-default-stream(Int $input = 0, Int $output = 2, StreamFormat $format = Float32, Int $sample-rate = 44100, Int $frames-per-buffer = 256) returns Stream {
         my CArray[Stream] $stream = CArray[Stream].new;
         $stream[0] = Stream.new;
-        say Pa_OpenDefaultStream($stream,$input,$output,$format, Num($sample-rate), $frames-per-buffer, Code, CArray);
+        my $rc = Pa_OpenDefaultStream($stream,$input,$output,$format.Int, Num($sample-rate), $frames-per-buffer, Code, CArray);
+        if $rc != 0 {
+            X::OpenError.new(code => $rc, error-text => self.error-text($rc)).throw;
+        }
         $stream[0];
     }
     
-    sub Pa_OpenStream(Pointer[Stream] $stream,
-                      StreamParameters $inParams,
-                      StreamParameters $outParams,
+    sub Pa_OpenStream(CArray[Stream] $stream,
+                      StreamParameters $in-params,
+                      StreamParameters $out-params,
                       num64 $sample-rate,
                       int32 $frames-per-buffer,
                       int32 $flags,
-                      CArray[OpaquePointer] $user-data)
+                      &callback (CArray $inputbuf, CArray $outputbuf, int32 $framecount, StreamCallbackTimeInfo $callback-time-info, int32 $cb-flags, CArray $cb-user-data --> int32),
+                      CArray $user-data)
         returns int32 is native('portaudio',v2) {...}
+
+    method open-stream(StreamParameters $in-params, StreamParameters $out-params, Int $sample-rate = 44100, Int $frames-per-buffer = 256) returns Stream {
+        my CArray[Stream] $stream = CArray[Stream].new;
+        $stream[0] = Stream.new;
+        my $rc = Pa_OpenStream($stream, $in-params, $out-params, Num($sample-rate), $frames-per-buffer, 0, Code, CArray);
+        if $rc != 0 {
+            X::OpenError.new(code => $rc, error-text => self.error-text($rc)).throw;
+        }
+        $stream[0];
+    }
+    sub Pa_IsFormatSupported( StreamParameters $input, StreamParameters $output, num64 $sample-rate ) returns int32 is native('portaudio', v2) { * }
+
+    method is-format-supported(StreamParameters $input, StreamParameters $output, Int $sample-rate) returns Bool {
+        my $rc = Pa_IsFormatSupported($input, $output, Num($sample-rate));
+        if $rc != 0 {
+            say self.error-text($rc);
+        }
+        $rc == 0 ?? True !! False;
+    }
 }
 # vim: expandtab shiftwidth=4 ft=perl6

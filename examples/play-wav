@@ -20,12 +20,33 @@ that Audio::Sndfile understands,) to the default output device.
 use Audio::PortAudio;
 use Audio::Sndfile;
 
-sub MAIN(Str $filename) { 
+sub MAIN(Str $filename, Bool :$jack) { 
 
     my $pa = Audio::PortAudio.new;
     my $in-file = Audio::Sndfile.new(:$filename, :r);
 
-    my $st = $pa.open-default-stream(0,$in-file.channels, Audio::PortAudio::StreamFormat::Float32, $in-file.samplerate);
+    my Audio::PortAudio::Stream $st;
+    
+    
+    if $jack {
+        my $ha = $pa.host-api(Audio::PortAudio::HostApiTypeId::JACK);
+        my $la = $pa.device-info($ha.default-output-device).default-low-output-latency;
+        if $ha.device-count {
+            my $si = Audio::PortAudio::StreamParameters.new(device              => $ha.default-output-device,
+                                                            channel-count       => $in-file.channels,
+                                                            sample-format       => Audio::PortAudio::StreamFormat::Float32,
+                                                            suggested-latency   => $la);
+            say $si.perl;
+            $pa.is-format-supported(Audio::PortAudio::StreamParameters, $si, $in-file.samplerate);
+            $st = $pa.open-stream(Audio::PortAudio::StreamParameters, $si, $in-file.samplerate);
+        }
+        else {
+            die "no jack devices";
+        }
+    }
+    else {
+        $st = $pa.open-default-stream(0,$in-file.channels, Audio::PortAudio::StreamFormat::Float32, $in-file.samplerate);
+    }
 
 
     $st.start;

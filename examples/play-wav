@@ -1,0 +1,44 @@
+#!perl6
+
+=begin pod
+
+=head1 NAME
+
+play-wav - play a PCM file
+
+=head1 SYNOPSIS
+
+   play-wav <filename>
+
+=head1 DESCRIPTION
+
+This simply plays the supplied file (which must be some uncompressed format
+that Audio::Sndfile understands,) to the default output device.
+
+=end pod
+
+use Audio::PortAudio;
+use Audio::Sndfile;
+
+sub MAIN(Str $filename) { 
+
+    my $pa = Audio::PortAudio.new;
+    my $in-file = Audio::Sndfile.new(:$filename, :r);
+
+    my $st = $pa.open-default-stream(0,$in-file.channels, Audio::PortAudio::StreamFormat::Float32, $in-file.samplerate);
+
+
+    $st.start;
+
+    loop {
+	    my ( $buf, $frames) = $in-file.read-float(512, :raw);
+	    $st.write($buf, $frames);
+	    last if $frames < 512;
+    }
+
+    $in-file.close;
+    $st.close;
+}
+
+
+# vim: expandtab shiftwidth=4 ft=perl6

@@ -1,0 +1,26 @@
+#!perl6
+
+use Audio::PortAudio;
+use Audio::Sndfile;
+
+sub MAIN(Str $filename) {
+    my $pa = Audio::PortAudio.new;
+    my $format = Audio::Sndfile::Info::Format::WAV +| Audio::Sndfile::Info::Subformat::PCM_16;
+    my $out-file = Audio::Sndfile.new(:$filename, channels => 2, samplerate => 44100, :$format, :w);
+    my $st = $pa.open-default-stream(2,0, Audio::PortAudio::StreamFormat::Float32, 44100);
+    $st.start;
+    signal(SIGINT).tap({
+        say "stopping recording";
+        $out-file.close;
+        $st.close;
+        exit;
+    });
+    loop {
+        my $buff = $st.read(512,2, num32);
+        $out-file.write-float($buff, 512);
+    }
+
+}
+
+
+# vim: expandtab shiftwidth=4 ft=perl6

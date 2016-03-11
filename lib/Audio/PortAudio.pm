@@ -90,7 +90,14 @@ class Audio::PortAudio {
 
     # Single base exception 
     class X::PortAudio is Exception {
-
+        has Int $.code is required;
+        has Str $.error-text;
+        method error-text() returns Str {
+            if !$!error-text.defined {
+                $!error-text = Pa_GetErrorText($!code);
+            }
+            $!error-text;
+        }
     }
 
     class StreamCallbackTimeInfo is repr('CStruct') {
@@ -157,6 +164,13 @@ class Audio::PortAudio {
         }
     }
 
+    class X::StreamError is X::PortAudio {
+        has Str $.what;
+        method message() {
+            "{ $!what } : { $.error-text }";
+        }
+    }
+
     class Stream is repr('CPointer') {
         sub Pa_StartStream(Stream $stream) returns int32 is native('portaudio',v2) {...}
 
@@ -173,7 +187,12 @@ class Audio::PortAudio {
         sub Pa_WriteStream(Stream $stream, CArray $buf, int32 $frames) returns int32 is native('portaudio',v2) {...}
 
         method write(CArray $buf, Int $frames) returns Int {
-            Pa_WriteStream(self, $buf, $frames);
+            my $rc = Pa_WriteStream(self, $buf, $frames);
+
+            if $rc != 0 {
+                X::StreamError.new(code => $rc, what => "writing to stream").throw;
+            }
+            $rc;
         }
 
         sub Pa_IsStreamStopped(Stream $stream) returns int32 is native('portaudio', v2) { * }
@@ -192,6 +211,9 @@ class Audio::PortAudio {
 
         method read-available() returns Int {
             my $rc = Pa_GetStreamReadAvailable(self);
+            if $rc < 0 {
+                X::StreamError.new(code => $rc, what => "getting read frames").throw;
+            }
 
             $rc;
         }
@@ -201,7 +223,22 @@ class Audio::PortAudio {
         method write-available() returns Int {
             my $rc = Pa_GetStreamWriteAvailable(self);
 
+            if $rc < 0 {
+                X::StreamError.new(code => $rc, what => "getting write frames").throw;
+            }
+
             $rc;
+        }
+
+        sub Pa_ReadStream(Stream $stream, CArray $buffer, ulong $frames) returns int32 is native('portaudio', v2) { * }
+
+        method read(Int $frames, Int $num-channels, Mu:U $type) returns CArray {
+            my $buff = CArray[$type].new(0 xx ($frames * $num-channels));
+            my $rc = Pa_ReadStream(self, $buff, $frames);
+            if $rc != 0 {
+                X::StreamError.new(code => $rc, what => "reading stream").throw;
+            }
+            $buff;
         }
     }
 
@@ -265,11 +302,9 @@ class Audio::PortAudio {
                              CArray $user-data)
         returns int32 is native('portaudio',v2) {...}
 
-    class X::OpenError is Exception {
-        has Int $.code;
-        has Str $.error-text;
+    class X::OpenError is X::PortAudio {
         method message() returns Str  {
-            "error opening stream: '{ $!error-text }'";
+            "error opening stream: '{ $.error-text }'";
         }
     }
 
@@ -306,9 +341,6 @@ class Audio::PortAudio {
 
     method is-format-supported(StreamParameters $input, StreamParameters $output, Int $sample-rate) returns Bool {
         my $rc = Pa_IsFormatSupported($input, $output, Num($sample-rate));
-        if $rc != 0 {
-            say self.error-text($rc);
-        }
         $rc == 0 ?? True !! False;
     }
 }

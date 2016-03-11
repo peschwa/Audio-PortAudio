@@ -15,6 +15,10 @@ play-wav - play a PCM file
 This simply plays the supplied file (which must be some uncompressed format
 that Audio::Sndfile understands,) to the default output device.
 
+If the switch '--jack' is supplied then it will attempt to output to the
+default 'jack' output if the jack daemon is running (this will typicaly
+be 'system' but may differ on your computer.)
+
 =end pod
 
 use Audio::PortAudio;
@@ -59,6 +63,7 @@ sub MAIN(Str $filename, Bool :$jack) {
 
     $in-file.close;
     $st.close;
+    $pa.terminate;
 }
 
 

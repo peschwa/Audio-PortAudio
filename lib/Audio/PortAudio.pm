@@ -230,10 +230,11 @@ class Audio::PortAudio {
             $rc;
         }
 
-        sub Pa_ReadStream(Stream $stream, CArray $buffer, ulong $frames) returns int32 is native('portaudio', v2) { * }
+        sub Pa_ReadStream(Stream $stream, CArray $buffer is rw, ulong $frames) returns int32 is native('portaudio', v2) { * }
 
         method read(Int $frames, Int $num-channels, Mu:U $type) returns CArray {
-            my $buff = CArray[$type].new(0 xx ($frames * $num-channels));
+            my $zero = $type ~~ Num ?? 0e0 !! 0;
+            my $buff = CArray[$type].new($zero xx ($frames * $num-channels));
             my $rc = Pa_ReadStream(self, $buff, $frames);
             if $rc != 0 {
                 X::StreamError.new(code => $rc, what => "reading stream").throw;

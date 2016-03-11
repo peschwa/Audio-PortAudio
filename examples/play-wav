@@ -40,8 +40,6 @@ sub MAIN(Str $filename, Bool :$jack) {
                                                             channel-count       => $in-file.channels,
                                                             sample-format       => Audio::PortAudio::StreamFormat::Float32,
                                                             suggested-latency   => $la);
-            say $si.perl;
-            $pa.is-format-supported(Audio::PortAudio::StreamParameters, $si, $in-file.samplerate);
             $st = $pa.open-stream(Audio::PortAudio::StreamParameters, $si, $in-file.samplerate);
         }
         else {

@@ -8,14 +8,14 @@ class Audio::PortAudio {
     constant SAMPLE_RATE = 44100e0;
     
     enum StreamFormat (
-        'Float32' => 0x00000001,
-        'Int32' => 0x00000002,
-        'Int24' => 0x00000004,
-        'Int16' => 0x00000008,
-        'Int8' => 0x00000010,
-        'UInt8' => 0x00000020,
-        'CustomFormat' => 0x00010000,
-        'NonInterleaved' => 0x80000000,
+        Float32         => 0x00000001,
+        Int32           => 0x00000002,
+        Int24           => 0x00000004,
+        Int16           => 0x00000008,
+        Int8            => 0x00000010,
+        UInt8           => 0x00000020,
+        CustomFormat    => 0x00010000,
+        NonInterleaved  => 0x80000000,
     );
     
     constant paInputUnderflow is export     = 0x00000001;
@@ -64,26 +64,26 @@ class Audio::PortAudio {
     );
     
     enum HostApiTypeId  (
-        'InDevelopment' => 0,
-        'DirectSound' => 1,
-        'MME' => 2,
-        'ASIO' => 3,
-        'SoundManager' => 4,
-        'CoreAudio' => 5,
-        'OSS' => 7,
-        'ALSA' => 8,
-        'AL' => 9,
-        'BeOS' => 10,
-        'WDMKS' => 11,
-        'JACK' => 12,
-        'WASAPI' => 13,
-        'AudioScienceHPI' => 14
+        InDevelopment   => 0,
+        DirectSound     => 1,
+        MME             => 2,
+        ASIO            => 3,
+        SoundManager    => 4,
+        CoreAudio       => 5,
+        OSS             => 7,
+        ALSA            => 8,
+        AL              => 9,
+        BeOS            => 10,
+        WDMKS           => 11,
+        JACK            => 12,
+        WASAPI          => 13,
+        AudioScienceHPI => 14
     );
     
     enum StreamCallbackResult (
-        'paContinue' => 0,
-        'paComplete' => 1,
-        'paAbort' => 2
+        Continue => 0,
+        Complete => 1,
+        Abort => 2
     );
     
     sub Pa_GetErrorText(int32 $errcode) returns Str is native('portaudio',v2) {...}

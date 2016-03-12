@@ -8,14 +8,14 @@ class Audio::PortAudio {
     constant SAMPLE_RATE = 44100e0;
     
     enum StreamFormat (
-        Float32 => 0x00000001,
-        Int32 => 0x00000002,
-        Int24 => 0x00000004,
-        Int16 => 0x00000008,
-        Int8 => 0x00000010,
-        UInt8 => 0x00000020,
-        CustomFormat => 0x00010000,
-        NonInterleaved => 0x80000000,
+        'Float32' => 0x00000001,
+        'Int32' => 0x00000002,
+        'Int24' => 0x00000004,
+        'Int16' => 0x00000008,
+        'Int8' => 0x00000010,
+        'UInt8' => 0x00000020,
+        'CustomFormat' => 0x00010000,
+        'NonInterleaved' => 0x80000000,
     );
     
     constant paInputUnderflow is export     = 0x00000001;
@@ -30,7 +30,7 @@ class Audio::PortAudio {
     constant paPrimeOutputBufferUsingStreamCallback = 0x00000008;
     constant paPlatformSpecificFlags                = 0xFFFF0000;
     
-    enum ErrorCode is export (
+    enum ErrorCode (
         "paNoError" => 0,
         "paNotInitialized" => -10000,
         "paUnanticipatedHostError",
@@ -63,27 +63,27 @@ class Audio::PortAudio {
         "paBadBufferPtr"
     );
     
-    enum HostApiTypeId is export (
-        InDevelopment => 0,
-        DirectSound => 1,
-        MME => 2,
-        ASIO => 3,
-        SoundManager => 4,
-        CoreAudio => 5,
-        OSS => 7,
-        ALSA => 8,
-        AL => 9,
-        BeOS => 10,
-        WDMKS => 11,
-        JACK => 12,
-        WASAPI => 13,
-        AudioScienceHPI => 14
+    enum HostApiTypeId  (
+        'InDevelopment' => 0,
+        'DirectSound' => 1,
+        'MME' => 2,
+        'ASIO' => 3,
+        'SoundManager' => 4,
+        'CoreAudio' => 5,
+        'OSS' => 7,
+        'ALSA' => 8,
+        'AL' => 9,
+        'BeOS' => 10,
+        'WDMKS' => 11,
+        'JACK' => 12,
+        'WASAPI' => 13,
+        'AudioScienceHPI' => 14
     );
     
-    enum StreamCallbackResult is export (
-        paContinue => 0,
-        paComplete => 1,
-        paAbort => 2
+    enum StreamCallbackResult (
+        'paContinue' => 0,
+        'paComplete' => 1,
+        'paAbort' => 2
     );
     
     sub Pa_GetErrorText(int32 $errcode) returns Str is native('portaudio',v2) {...}
@@ -230,7 +230,7 @@ class Audio::PortAudio {
             $rc;
         }
 
-        sub Pa_ReadStream(Stream $stream, CArray $buffer is rw, ulong $frames) returns int32 is native('portaudio', v2) { * }
+        sub Pa_ReadStream(Stream $stream, CArray $buffer, uint64 $frames) returns int32 is native('portaudio', v2) { * }
 
         method read(Int $frames, Int $num-channels, Mu:U $type) returns CArray {
             my $zero = $type ~~ Num ?? 0e0 !! 0;
@@ -309,7 +309,7 @@ class Audio::PortAudio {
         }
     }
 
-    method open-default-stream(Int $input = 0, Int $output = 2, StreamFormat $format = Float32, Int $sample-rate = 44100, Int $frames-per-buffer = 256) returns Stream {
+    method open-default-stream(Int $input = 0, Int $output = 2, StreamFormat $format = StreamFormat::Float32, Int $sample-rate = 44100, Int $frames-per-buffer = 256) returns Stream {
         my CArray[Stream] $stream = CArray[Stream].new;
         $stream[0] = Stream.new;
         my $rc = Pa_OpenDefaultStream($stream,$input,$output,$format.Int, Num($sample-rate), $frames-per-buffer, Code, CArray);
